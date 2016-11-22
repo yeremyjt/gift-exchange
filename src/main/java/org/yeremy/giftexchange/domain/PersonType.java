@@ -1,4 +1,4 @@
-package com.yeremy.giftexchange.domain;
+package org.yeremy.giftexchange.domain;
 
 public enum PersonType
 {

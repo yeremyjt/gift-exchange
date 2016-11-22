@@ -1,8 +1,8 @@
-package com.yeremy.giftexchange.domain;
-
-import com.yeremy.giftexchange.dto.GiftSet;
+package org.yeremy.giftexchange.domain;
 
 import java.util.List;
+
+import org.yeremy.giftexchange.dto.GiftSet;
 
 public interface GiftExchangeService
 {

@@ -1,4 +1,4 @@
-package com.yeremy.giftexchange;
+package org.yeremy.giftexchange;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

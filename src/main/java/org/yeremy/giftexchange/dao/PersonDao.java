@@ -1,8 +1,8 @@
-package com.yeremy.giftexchange.dao;
-
-import com.yeremy.giftexchange.domain.Person;
+package org.yeremy.giftexchange.dao;
 
 import java.util.List;
+
+import org.yeremy.giftexchange.domain.Person;
 
 public interface PersonDao
 {
