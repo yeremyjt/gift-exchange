@@ -7,10 +7,14 @@ import java.util.Random;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
 
 import org.yeremy.giftexchange.dao.PersonDao;
 import org.yeremy.giftexchange.dto.GiftSet;
 
+@Named
+@Singleton
 public class GiftExchangeServiceImpl implements GiftExchangeService
 {
     @Inject
@@ -22,9 +26,9 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         List<GiftSet> giftSets = new ArrayList<>();
         List<Person> persons = personDao.getPersons(familyGroup);
 
-        List<Person> parentGivers = persons.stream().filter(x -> x.getType() == PersonType.ADULT)
+        List<Person> parentGivers = persons.stream().filter(x -> x.getType() == PersonType.PARENT)
                 .collect(Collectors.toList());
-        List<Person> potentialParentReceivers = persons.stream().filter(x -> x.getType() == PersonType.ADULT)
+        List<Person> potentialParentReceivers = persons.stream().filter(x -> x.getType() == PersonType.PARENT)
                 .collect(Collectors.toList());
         List<Person> childrenGivers = persons.stream().filter(x -> x.getType() == PersonType.CHILD)
                 .collect(Collectors.toList());

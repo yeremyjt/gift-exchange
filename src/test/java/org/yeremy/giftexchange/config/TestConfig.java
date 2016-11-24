@@ -16,7 +16,7 @@ import org.springframework.jdbc.datasource.embedded.EmbeddedDatabaseType;
 
 @Configuration
 @PropertySource("classpath:${spring.profiles.active}.properties")
-@ComponentScan(basePackages = { "org.yeremy.giftexchange", "org.yeremy.giftexchange.domain",
+@ComponentScan(basePackages = { "org.yeremy.giftexchange.dao", "org.yeremy.giftexchange.domain",
         "org.yeremy.giftexchange.dto" })
 public class TestConfig
 {
@@ -26,7 +26,8 @@ public class TestConfig
         final EmbeddedDatabaseBuilder builder = new EmbeddedDatabaseBuilder();
         final EmbeddedDatabase dataSource = builder.setType(EmbeddedDatabaseType.H2)
                 .addScript("classpath:giftexchange_db_create.sql")
-                .addScript("classpath:giftexchange_db_insert_test_data.sql").build();
+                .addScript("classpath:giftexchange_db_insert_test_data.sql")
+                .build();
 
         return dataSource;
     }

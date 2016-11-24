@@ -6,7 +6,7 @@ public class Person
     private String name;
     private PersonType type;
     private String familyName;
-    private String familyGroup;
+    private String familyGroupName;
 
     public int getId()
     {
@@ -48,13 +48,13 @@ public class Person
         this.familyName = familyName;
     }
 
-    public String getFamilyGroup()
+    public String getFamilyGroupName()
     {
-        return familyGroup;
+        return familyGroupName;
     }
 
-    public void setFamilyGroup(String familyGroup)
+    public void setFamilyGroupName(String familyGroup)
     {
-        this.familyGroup = familyGroup;
+        this.familyGroupName = familyGroup;
     }
 }
