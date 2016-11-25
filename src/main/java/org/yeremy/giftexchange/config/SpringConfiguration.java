@@ -39,7 +39,7 @@ public class SpringConfiguration
     private ApiInfo apiInfo()
     {
         final ApiInfo apiInfo = new ApiInfo(
-                "Sudoku Service REST API",
+                "GiftExchange Service REST API",
                 "Yeremy's Gift Exchange Service.",
                 "1",
                 "yeremyturcios@gmai.com",

@@ -57,4 +57,31 @@ public class Person
     {
         this.familyGroupName = familyGroup;
     }
+
+    @Override
+    public boolean equals(Object obj)
+    {
+        if (obj == null)
+        {
+            return false;
+        }
+
+        if (obj instanceof Person)
+        {
+            Person that = (Person) obj;
+            if (that.getId() == this.id && that.getName().equals(this.name) && that.getType() == this.type
+                    && that.familyName.equals(this.familyName) && that.familyGroupName.equals(this.familyGroupName))
+            {
+                return true;
+            }
+            else
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
+    }
 }
