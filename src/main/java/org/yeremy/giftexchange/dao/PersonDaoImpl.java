@@ -12,7 +12,7 @@ import javax.ws.rs.NotFoundException;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BeanPropertyRowMapper;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.yeremy.giftexchange.domain.Person;
+import org.yeremy.giftexchange.dto.Person;
 
 @Named
 @Singleton

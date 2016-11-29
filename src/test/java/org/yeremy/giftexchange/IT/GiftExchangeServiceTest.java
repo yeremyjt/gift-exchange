@@ -1,8 +1,11 @@
 package org.yeremy.giftexchange.IT;
 
+import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -10,14 +13,14 @@ import javax.inject.Inject;
 import org.junit.BeforeClass;
 import org.junit.Test;
 import org.junit.runner.RunWith;
-import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringJUnit4ClassRunner;
 import org.yeremy.giftexchange.config.TestConfig;
+import org.yeremy.giftexchange.dao.ExchangeHistoryDao;
 import org.yeremy.giftexchange.dao.PersonDao;
 import org.yeremy.giftexchange.domain.GiftExchangeService;
-import org.yeremy.giftexchange.domain.Person;
+import org.yeremy.giftexchange.dto.Person;
 import org.yeremy.giftexchange.dto.GiftSet;
 
 @RunWith(SpringJUnit4ClassRunner.class)
@@ -37,11 +40,15 @@ public class GiftExchangeServiceTest
     @Inject
     private PersonDao personDao;
 
+    @Inject
+    private ExchangeHistoryDao exchangeHistoryDao;
+
     @Test
     public void testService_Ok()
     {
-        List<GiftSet> giftSets = giftExchangeService.getGiftExchangeList("PIXTON");
+        List<GiftSet> giftSets = giftExchangeService.getGiftExchangeList("PIXTON", true);
         assertNotNull(giftSets);
+        assertTrue(exchangeHistoryDao.getExchangeHistory("PIXTON", OffsetDateTime.now(ZoneId.of("UTC")).getYear()).size() > 0);
     }
 
     @Test
@@ -51,7 +58,7 @@ public class GiftExchangeServiceTest
 
         for (int i = 0; i < 1000; i++)
         {
-            List<GiftSet> giftSets = giftExchangeService.getGiftExchangeList("PIXTON");
+            List<GiftSet> giftSets = giftExchangeService.getGiftExchangeList("PIXTON", false);
             assertNotNull(giftSets);
 
             for (Person person : persons)

@@ -1,4 +1,4 @@
-package org.yeremy.giftexchange.domain;
+package org.yeremy.giftexchange.dto;
 
 public class Person
 {

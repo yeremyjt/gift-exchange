@@ -11,6 +11,8 @@ import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 
 import com.zaxxer.hikari.HikariDataSource;
 
+import org.springframework.jdbc.datasource.DataSourceTransactionManager;
+import org.springframework.transaction.PlatformTransactionManager;
 import springfox.documentation.builders.PathSelectors;
 import springfox.documentation.builders.RequestHandlerSelectors;
 import springfox.documentation.service.ApiInfo;
@@ -60,6 +62,12 @@ public class SpringConfiguration
         dataSource.setPassword(mysqlPassword);
         dataSource.setJdbcUrl(mysqlUrl);
         return dataSource;
+    }
+
+    @Bean
+    public PlatformTransactionManager platformTransactionManager(DataSource dataSource)
+    {
+        return new DataSourceTransactionManager(dataSource);
     }
 
     @Bean

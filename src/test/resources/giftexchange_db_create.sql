@@ -29,8 +29,11 @@ CREATE TABLE person (
 
 CREATE TABLE exchange_history (
   id       INTEGER AUTO_INCREMENT,
-  giver    VARCHAR(36),
-  receiver VARCHAR(36),
+  giver_id    INTEGER,
+  giver_name VARCHAR(36),
+  receiver_id INTEGER,
+  receiver_name VARCHAR(36),
+  family_group VARCHAR(36),
   year     INTEGER,
   PRIMARY KEY (id)
 ) ENGINE = INNODB;

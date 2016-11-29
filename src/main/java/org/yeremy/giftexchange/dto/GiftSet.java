@@ -1,7 +1,5 @@
 package org.yeremy.giftexchange.dto;
 
-import org.yeremy.giftexchange.domain.Person;
-
 public class GiftSet
 {
     private Person giver;
