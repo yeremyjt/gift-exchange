@@ -26,7 +26,7 @@ public class GiftExchangeController
     private GiftExchangeService giftExchangeService;
 
     @RequestMapping(path = "/{familyGroup}", method = RequestMethod.POST, produces = "application/json", consumes = "text/plain")
-    public List<GiftSet> getGiftExchangeList(@PathVariable String familyGroup, @RequestParam(value = "record", required = false) Boolean record)
+    public List<GiftSet> getGiftExchangeList(@PathVariable String familyGroup, @RequestParam(value = "record") Boolean record)
     {
         return giftExchangeService.getGiftExchangeList(familyGroup, record);
     }

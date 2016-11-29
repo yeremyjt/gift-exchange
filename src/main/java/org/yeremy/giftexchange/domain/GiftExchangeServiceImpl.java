@@ -31,6 +31,8 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
     @Transactional
     public List<GiftSet> getGiftExchangeList(String familyGroup, Boolean record)
     {
+        familyGroup = familyGroup.toUpperCase();
+
         int thisYear = OffsetDateTime.now(ZoneId.of("UTC")).getYear();
         List<ExchangeHistory> thisYearExchangeHistory = exchangeHistoryDao.getExchangeHistory(familyGroup, thisYear);
 
@@ -42,7 +44,6 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         int lastYear = OffsetDateTime.now(ZoneId.of("UTC")).getYear() - 1;
         List<ExchangeHistory> lastYearExchangeHistory = exchangeHistoryDao.getExchangeHistory(familyGroup, lastYear);
 
-        familyGroup = familyGroup.toUpperCase();
         final List<GiftSet> giftSets = new ArrayList<>();
         final List<Person> persons = personDao.getPersons(familyGroup);
 
