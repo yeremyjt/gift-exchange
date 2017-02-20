@@ -1,4 +1,4 @@
-USE GiftExchange;
+USE gift_exchange;
 
 DROP TABLE IF EXISTS exchange_history;
 DROP TABLE IF EXISTS person;

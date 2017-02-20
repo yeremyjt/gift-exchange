@@ -1,5 +1,18 @@
 package org.yeremy.giftexchange.domain;
 
+import java.time.OffsetDateTime;
+import java.time.ZoneId;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
+import java.util.stream.Collectors;
+
+import javax.inject.Inject;
+import javax.inject.Named;
+import javax.inject.Singleton;
+import javax.ws.rs.NotAllowedException;
+
 import org.springframework.transaction.annotation.Transactional;
 import org.yeremy.giftexchange.dao.ExchangeHistoryDao;
 import org.yeremy.giftexchange.dao.PersonDao;
@@ -7,15 +20,6 @@ import org.yeremy.giftexchange.dto.ExchangeHistory;
 import org.yeremy.giftexchange.dto.GiftSet;
 import org.yeremy.giftexchange.dto.Person;
 import org.yeremy.giftexchange.dto.PersonType;
-
-import javax.inject.Inject;
-import javax.inject.Named;
-import javax.inject.Singleton;
-import javax.ws.rs.NotAllowedException;
-import java.time.OffsetDateTime;
-import java.time.ZoneId;
-import java.util.*;
-import java.util.stream.Collectors;
 
 @Named
 @Singleton
@@ -41,20 +45,37 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
             throw new NotAllowedException("The gift exchange for the year " + thisYear + " has already been recorded.");
         }
 
-        int lastYear = OffsetDateTime.now(ZoneId.of("UTC")).getYear() - 1;
-        List<ExchangeHistory> lastYearExchangeHistory = exchangeHistoryDao.getExchangeHistory(familyGroup, lastYear);
+        int currentYear = OffsetDateTime.now(ZoneId.of("UTC")).getYear();
+
+        int oneYearAgo = currentYear - 1;
+        int twoYearsAgo = currentYear - 2;
+        int threeYearsAgo = currentYear - 3;
+        int fourYearsAgo = currentYear - 4;
+        int fiveYearsAgo = currentYear - 5;
+
+        List<ExchangeHistory> previousYearsExchangeHistories = new ArrayList<>();
+        previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
+                oneYearAgo));
+        previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
+                twoYearsAgo));
+        previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
+                threeYearsAgo));
+        previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
+                fourYearsAgo));
+        previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
+                fiveYearsAgo));
 
         final List<GiftSet> giftSets = new ArrayList<>();
         final List<Person> persons = personDao.getPersons(familyGroup);
 
-        giftSets.addAll(assignGiftSets(persons, PersonType.PARENT, lastYearExchangeHistory));
-        giftSets.addAll(assignGiftSets(persons, PersonType.CHILD, lastYearExchangeHistory));
+        giftSets.addAll(assignGiftSets(persons, PersonType.PARENT, previousYearsExchangeHistories));
+        giftSets.addAll(assignGiftSets(persons, PersonType.CHILD, previousYearsExchangeHistories));
 
         if (record)
         {
             recordExchangeHistory(familyGroup, giftSets);
         }
-        
+
         return giftSets;
     }
 
@@ -88,7 +109,8 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         return persons;
     }
 
-    private List<GiftSet> assignGiftSets(List<Person> persons, PersonType type, List<ExchangeHistory> lastYearExchangeHistory)
+    private List<GiftSet> assignGiftSets(List<Person> persons, PersonType type,
+            List<ExchangeHistory> previousYearsExchangeHistories)
     {
         final List<Person> givers = persons.stream().filter(x -> x.getType() == type)
                 .collect(Collectors.toList());
@@ -99,7 +121,7 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
                     .collect(Collectors.toList());
             potentialReceivers = randomizeReceivers(potentialReceivers);
             List<GiftSet> giftSets = new ArrayList<>();
-            boolean colition = false;
+            boolean colission = false;
 
             for (Person giver : givers)
             {
@@ -111,9 +133,9 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
                 {
                     if (potentialReceiver.getName()
                             .equals(giver.getName()) || potentialReceiver.getFamilyName().equals(giver.getFamilyName())
-                            || sameAsLastYear(giver, potentialReceiver, lastYearExchangeHistory))
+                            || sameAsPreviousYear(giver, potentialReceiver, previousYearsExchangeHistories))
                     {
-                        colition = true;
+                        colission = true;
                         break;
                     }
                     receiver = potentialReceiver;
@@ -122,7 +144,7 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
                     break;
                 }
 
-                if (colition)
+                if (colission)
                 {
                     break;
                 }
@@ -130,7 +152,7 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
                 potentialReceivers.remove(receiver);
             }
 
-            if (colition)
+            if (colission)
             {
                 continue;
             }
@@ -141,28 +163,22 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         }
     }
 
-    private boolean sameAsLastYear(Person giver, Person potentialReceiver, List<ExchangeHistory> lastYearExchangeHistory)
+    private boolean sameAsPreviousYear(Person giver, Person potentialReceiver,
+            List<ExchangeHistory> previousYearsExchangeHistories)
     {
+        ExchangeHistory match = previousYearsExchangeHistories.stream()
+                .filter(x -> x.getGiverId() == giver.getId())
+                .filter(x -> x.getReceiverId() == potentialReceiver.getId())
+                .findAny()
+                .orElse(null);
 
-        ExchangeHistory lastYearGiver;
-        try
-        {
-            lastYearGiver = lastYearExchangeHistory.stream().filter(x -> x.getGiverId() == giver.getId()).findFirst().get();
-        }
-        catch (NoSuchElementException e)
+        if (match == null)
         {
             return false;
-        }
-
-
-        if (lastYearGiver.getReceiverId() == potentialReceiver.getId())
-        {
-            return true;
         }
         else
         {
-            return false;
+            return true;
         }
-
     }
 }
