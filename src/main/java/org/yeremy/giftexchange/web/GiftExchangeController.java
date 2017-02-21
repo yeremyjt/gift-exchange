@@ -4,7 +4,6 @@ import java.util.List;
 
 import javax.inject.Inject;
 
-import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -18,7 +17,6 @@ import org.yeremy.giftexchange.dto.GiftSet;
 import io.swagger.annotations.Api;
 import springfox.documentation.swagger2.annotations.EnableSwagger2;
 
-@SpringBootApplication
 @EnableSwagger2
 @RestController
 @ComponentScan("org.yeremy.giftexchange")
@@ -29,7 +27,7 @@ public class GiftExchangeController
     @Inject
     private GiftExchangeService giftExchangeService;
 
-    @RequestMapping(path = "/{familyGroup}", method = RequestMethod.POST, produces = "application/json", consumes = "text/plain")
+    @RequestMapping(path = "/{familyGroup}", method = RequestMethod.GET, produces = "application/json")
     public List<GiftSet> getGiftExchangeList(@PathVariable("familyGroup") String familyGroup,
             @RequestParam(value = "record") Boolean record)
     {
