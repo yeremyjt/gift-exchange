@@ -114,53 +114,37 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
     {
         final List<Person> givers = persons.stream().filter(x -> x.getType() == type)
                 .collect(Collectors.toList());
+        List<Person> potentialReceivers = persons.stream().filter(x -> x.getType() == type)
+                .collect(Collectors.toList());
+        potentialReceivers = randomizeReceivers(potentialReceivers);
+        final List<Person> receivers = new ArrayList<>();
 
-        while (true)
+        List<GiftSet> giftSets = new ArrayList<>();
+
+        for (Person giver : givers)
         {
-            List<Person> potentialReceivers = persons.stream().filter(x -> x.getType() == type)
-                    .collect(Collectors.toList());
-            potentialReceivers = randomizeReceivers(potentialReceivers);
-            List<GiftSet> giftSets = new ArrayList<>();
-            boolean colission = false;
+            Person receiver = null;
+            GiftSet giftSet = new GiftSet();
+            giftSet.setGiver(giver);
 
-            for (Person giver : givers)
+            for (Person potentialReceiver : potentialReceivers)
             {
-                Person receiver = null;
-                GiftSet giftSet = new GiftSet();
-                giftSet.setGiver(giver);
-
-                for (Person potentialReceiver : potentialReceivers)
+                if (potentialReceiver.getName().equals(giver.getName())
+                        || potentialReceiver.getFamilyName().equals(giver.getFamilyName())
+                        || receivers.contains(potentialReceiver)
+                        || sameAsPreviousYear(giver, potentialReceiver, previousYearsExchangeHistories))
                 {
-                    if (potentialReceiver.getName()
-                            .equals(giver.getName()) || potentialReceiver.getFamilyName().equals(giver.getFamilyName())
-                            || sameAsPreviousYear(giver, potentialReceiver, previousYearsExchangeHistories))
-                    {
-                        colission = true;
-                        break;
-                    }
-                    receiver = potentialReceiver;
-                    giftSet.setReceiver(receiver);
-                    giftSets.add(giftSet);
-                    break;
+                    continue;
                 }
-
-                if (colission)
-                {
-                    break;
-                }
-
-                potentialReceivers.remove(receiver);
-            }
-
-            if (colission)
-            {
-                continue;
-            }
-            else
-            {
-                return giftSets;
+                receiver = potentialReceiver;
+                receivers.add(potentialReceiver);
+                giftSet.setReceiver(receiver);
+                giftSets.add(giftSet);
+                break;
             }
         }
+
+        return giftSets;
     }
 
     private boolean sameAsPreviousYear(Person giver, Person potentialReceiver,
