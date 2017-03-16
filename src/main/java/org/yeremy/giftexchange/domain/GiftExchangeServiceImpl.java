@@ -69,14 +69,50 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         final List<Person> persons = personDao.getPersons(familyGroup);
 
         giftSets.addAll(assignGiftSets(persons, PersonType.PARENT, previousYearsExchangeHistories));
-        giftSets.addAll(assignGiftSets(persons, PersonType.CHILD, previousYearsExchangeHistories));
+        // giftSets.addAll(assignGiftSets(persons, PersonType.CHILD, previousYearsExchangeHistories));
 
-        if (record)
-        {
-            recordExchangeHistory(familyGroup, giftSets);
-        }
+        // check(giftSets, persons);
+        //
+        // if (record)
+        // {
+        // recordExchangeHistory(familyGroup, giftSets);
+        // }
 
         return giftSets;
+    }
+
+    private void check(List<GiftSet> giftSets, List<Person> persons)
+    {
+        for (Person person : persons)
+        {
+            boolean found = false;
+            for (GiftSet giftSet : giftSets)
+            {
+                if (giftSet.getGiver().equals(person))
+                {
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                throw new RuntimeException(person.getName() + " wasn't found as a giver.");
+            }
+
+            found = false;
+            for (GiftSet giftSet : giftSets)
+            {
+                if (giftSet.getGiver().equals(person))
+                {
+                    found = true;
+                }
+            }
+
+            if (!found)
+            {
+                throw new RuntimeException(person.getName() + " wasn't found as a receiver.");
+            }
+        }
     }
 
     @Override
@@ -116,7 +152,8 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
                 .collect(Collectors.toList());
         List<Person> potentialReceivers = persons.stream().filter(x -> x.getType() == type)
                 .collect(Collectors.toList());
-        potentialReceivers = randomizeReceivers(potentialReceivers);
+        // potentialReceivers = randomizeReceivers(potentialReceivers);
+        List<Person> potentialReceiversReverseOrder = reverseOrder(potentialReceivers);
         final List<Person> receivers = new ArrayList<>();
 
         List<GiftSet> giftSets = new ArrayList<>();
@@ -127,7 +164,7 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
             GiftSet giftSet = new GiftSet();
             giftSet.setGiver(giver);
 
-            for (Person potentialReceiver : potentialReceivers)
+            for (Person potentialReceiver : potentialReceiversReverseOrder)
             {
                 if (potentialReceiver.getName().equals(giver.getName())
                         || potentialReceiver.getFamilyName().equals(giver.getFamilyName())
@@ -145,6 +182,20 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         }
 
         return giftSets;
+    }
+
+    private List<Person> reverseOrder(List<Person> potentialReceivers)
+    {
+        List<Person> persons = new ArrayList<>();
+
+        int n = potentialReceivers.size();
+
+        for (int i = n - 1; i >= 0; i--)
+        {
+            persons.add(potentialReceivers.get(i));
+        }
+
+        return persons;
     }
 
     private boolean sameAsPreviousYear(Person giver, Person potentialReceiver,
