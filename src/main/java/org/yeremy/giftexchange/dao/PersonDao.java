@@ -7,4 +7,6 @@ import org.yeremy.giftexchange.dto.Person;
 public interface PersonDao
 {
     List<Person> getPersons(String familyGroup);
+
+    Person getPersonById(int id);
 }
