@@ -1,5 +1,8 @@
 package org.yeremy.giftexchange.domain;
 
+import java.io.FileNotFoundException;
+import java.io.PrintWriter;
+import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -8,7 +11,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 import javax.inject.Inject;
@@ -37,6 +39,7 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
     @Override
     @Transactional
     public List<GiftSet> getGiftExchangeList(String familyGroup, Boolean record)
+            throws FileNotFoundException, UnsupportedEncodingException
     {
         familyGroup = familyGroup.toUpperCase();
 
@@ -154,34 +157,50 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
 
     private List<GiftSet> assignGiftSets(List<Person> persons, PersonType type,
             List<ExchangeHistory> previousYearsExchangeHistories, boolean checkPriorYears)
+            throws FileNotFoundException, UnsupportedEncodingException
     {
         final List<GiftSet> giftSets = new ArrayList<>();
-        final List<Person> givers = persons.stream().filter(x -> x.getType() == type)
+        final List<Person> filteredPersons = persons.stream().filter(x -> x.getType() == type)
                 .collect(Collectors.toList());
-        final List<Person> receivers = persons.stream().filter(x -> x.getType() == type)
-                .collect(Collectors.toList());
-        List<Person> potentialReceivers = new ArrayList<>(receivers);
-        potentialReceivers = randomizeReceivers(potentialReceivers);
+        final List<Person> reverseOrderFilteredPersons = getListInReverseOrder(filteredPersons);
+        List<Person> potentialReceivers = new ArrayList<>(filteredPersons);
 
-        final int n = givers.size();
+        final int n = filteredPersons.size();
 
         final Map<Person, List<Person>> possibleAssignmentsMap = new HashMap<>();
         final Map<Person, Person> assignmentsMap = new HashMap<>();
 
+        potentialReceivers = randomizeReceivers(potentialReceivers);
         // Setting list of potential receivers for each giver.
-        for (final Person giver : givers)
+        for (final Person giver : filteredPersons)
         {
             final List<Person> potentialReceiversForGiver = new ArrayList<>(potentialReceivers);
             potentialReceiversForGiver.remove(giver);
             potentialReceiversForGiver.remove(getSpouse(giver, potentialReceivers));
-            potentialReceiversForGiver.removeAll(getPriorYearsReceiversByGiver(giver, previousYearsExchangeHistories));
+            potentialReceiversForGiver
+                    .removeAll(getPriorYearsReceiversByGiver(giver, previousYearsExchangeHistories));
 
             possibleAssignmentsMap.put(giver, potentialReceiversForGiver);
         }
 
-        computeAssignments(receivers, possibleAssignmentsMap, assignmentsMap);
+        final PrintWriter writer = new PrintWriter("/home/yeremy/possible-assignments.txt", "UTF-8");
 
-        for (final Person giver : givers)
+        for (final Person person : filteredPersons)
+        {
+            writer.print(person.toString() + " -> ");
+
+            for (final Person p : possibleAssignmentsMap.get(person))
+            {
+                writer.print(" - ");
+                writer.print(p.toString());
+            }
+            writer.println();
+        }
+        writer.close();
+
+        computeAssignments(filteredPersons, possibleAssignmentsMap, assignmentsMap);
+
+        for (final Person giver : filteredPersons)
         {
             final GiftSet giftSet = new GiftSet();
             giftSet.setGiver(giver);
@@ -192,110 +211,117 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         return giftSets;
     }
 
-    private void computeAssignments(List<Person> receivers, Map<Person, List<Person>> possibleAssignmentsMap,
-            Map<Person, Person> assignmentsMap)
+    private boolean checkAssignmentsMap(Map<Person, Person> assignmentsMap, List<Person> filteredPersons)
     {
-        for (final Person receiver : receivers)
+        for (final Person person : filteredPersons)
         {
-            final Set<Person> giversSet = possibleAssignmentsMap.keySet();
-
-            for (final Person giver : giversSet)
+            if (!assignmentsMap.containsKey(person) || !assignmentsMap.containsValue(person))
             {
-                if (possibleAssignmentsMap.get(giver).contains(receiver))
-                {
-                    if (!assignmentsMap.containsKey(giver))
-                    {
-                        assignmentsMap.put(giver, receiver);
-                        break;
-                    }
-                    else
-                    {
-                        continue;
-                    }
-                }
+                return false;
             }
         }
 
-        final List<Person> leftOutReceivers = getLeftOutReceivers(assignmentsMap, receivers);
-
-        computeAssignmentsForLeftOut(leftOutReceivers, receivers, possibleAssignmentsMap, assignmentsMap);
-
+        return true;
     }
 
-    private void computeAssignmentsForLeftOut(List<Person> leftOutReceivers, List<Person> receivers,
-            Map<Person, List<Person>> possibleAssignmentsMap, Map<Person, Person> assignmentsMap)
+    private List<Person> getListInReverseOrder(List<Person> filteredPersons)
     {
-        for (final Person receiver : leftOutReceivers)
-        {
-            final Set<Person> giversSet = possibleAssignmentsMap.keySet();
+        final List<Person> reverseOrderList = new ArrayList<>();
+        final int n = filteredPersons.size() - 1;
 
-            for (final Person giver : giversSet)
+        for (int i = n; i >= 0; i--)
+        {
+            reverseOrderList.add(filteredPersons.get(i));
+        }
+
+        return reverseOrderList;
+    }
+
+    private void computeAssignments(List<Person> persons, Map<Person, List<Person>> possibleAssignmentsMap,
+            Map<Person, Person> assignmentsMap)
+    {
+        for (final Person giver : persons)
+        {
+            final List<Person> potentialReceivers = possibleAssignmentsMap.get(giver);
+
+            for (final Person receiver : potentialReceivers)
             {
-                if (possibleAssignmentsMap.get(giver).contains(receiver))
+                if (!assignmentsMap.containsValue(receiver))
                 {
-                    final Person oldReceiver = assignmentsMap.get(giver);
-                    assignmentsMap.replace(giver, receiver);
-                    possibleAssignmentsMap.get(giver).remove(oldReceiver);
+                    assignmentsMap.put(giver, receiver);
                     break;
                 }
             }
         }
 
-        final List<Person> leftOutReceiversInThisRound = getLeftOutReceivers(assignmentsMap, receivers);
-
-        if (leftOutReceiversInThisRound.size() == 0)
-            return;
-
-        computeAssignmentsForLeftOut(leftOutReceiversInThisRound, receivers, possibleAssignmentsMap, assignmentsMap);
-
+        List<Person> missingGivers = getMissingGivers(assignmentsMap, persons);
+        while (missingGivers.size() > 0)
+        {
+            swap(assignmentsMap, possibleAssignmentsMap, persons, missingGivers);
+            missingGivers = getMissingGivers(assignmentsMap, persons);
+        }
     }
 
-    private List<Person> getLeftOutReceivers(Map<Person, Person> assignmentsMap, List<Person> receivers)
+    private void swap(Map<Person, Person> assignmentsMap, Map<Person, List<Person>> possibleAssignmentsMap,
+            List<Person> persons, List<Person> missingGivers)
     {
-        final List<Person> leftOutReceivers = new ArrayList<>();
+        final List<Person> missingReceivers = getMissingReceivers(assignmentsMap, persons);
 
-        for (final Person receiver : receivers)
+        if (missingReceivers.size() > 0)
         {
-            if (!assignmentsMap.containsValue(receiver))
+            // Match one missing giver with one missing receiver
+            final Person missingGiver = missingGivers.iterator().next();
+            final Person missingReceiver = missingReceivers.iterator().next();
+
+            // Find a match and swap
+            for (final Person giver : persons)
             {
-                leftOutReceivers.add(receiver);
+                if (possibleAssignmentsMap.get(giver).contains(missingReceiver))
+                {
+                    if (assignmentsMap.containsKey(giver))
+                    {
+                        if (possibleAssignmentsMap.get(missingGiver).contains(assignmentsMap.get(giver)))
+                        {
+                            final Person receiverToSwap = assignmentsMap.get(giver);
+                            assignmentsMap.replace(giver, missingReceiver);
+                            assignmentsMap.put(missingGiver, receiverToSwap);
+                            return;
+                        }
+                    }
+                }
             }
         }
 
-        return leftOutReceivers;
     }
 
-    private List<Person> reverseOrder(List<Person> potentialReceivers)
+    private List<Person> getMissingGivers(Map<Person, Person> assignmentsMap, List<Person> persons)
     {
-        final List<Person> persons = new ArrayList<>();
+        final List<Person> missingGivers = new ArrayList<>();
 
-        final int n = potentialReceivers.size();
-
-        for (int i = n - 1; i >= 0; i--)
+        for (final Person person : persons)
         {
-            persons.add(potentialReceivers.get(i));
+            if (!assignmentsMap.containsKey(person))
+            {
+                missingGivers.add(person);
+            }
         }
 
-        return persons;
+        return missingGivers;
     }
 
-    private boolean sameAsPreviousYear(Person giver, Person potentialReceiver,
-            List<ExchangeHistory> previousYearsExchangeHistories)
+    private List<Person> getMissingReceivers(Map<Person, Person> assignmentsMap, List<Person> persons)
     {
-        final ExchangeHistory match = previousYearsExchangeHistories.stream()
-                .filter(x -> x.getGiverId() == giver.getId())
-                .filter(x -> x.getReceiverId() == potentialReceiver.getId())
-                .findAny()
-                .orElse(null);
+        final List<Person> missingReceivers = new ArrayList<>();
 
-        if (match == null)
+        for (final Person person : persons)
         {
-            return false;
+            if (!assignmentsMap.containsValue(person))
+            {
+                missingReceivers.add(person);
+            }
         }
-        else
-        {
-            return true;
-        }
+
+        return missingReceivers;
     }
 
     private List<Person> getPriorYearsReceiversByGiver(Person giver,

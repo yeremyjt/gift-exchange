@@ -1,0 +1,7 @@
+Ben Pixton ->  - Megan Christensen - Kim Pixton - Sam Christensen - Yeremy Turcios
+Erika Pixton ->  - Megan Christensen - Allison Turcios - Kim Pixton - Yeremy Turcios
+Kim Pixton ->  - Megan Christensen - Allison Turcios - Ben Pixton - Sam Christensen - Yeremy Turcios
+Sam Christensen ->  - Allison Turcios - Erika Pixton - Ben Pixton - Yeremy Turcios
+Megan Christensen ->  - Allison Turcios - Erika Pixton - Kim Pixton - Ben Pixton - Yeremy Turcios
+Yeremy Turcios ->  - Megan Christensen - Erika Pixton - Kim Pixton - Sam Christensen
+Allison Turcios ->  - Megan Christensen - Erika Pixton - Kim Pixton - Ben Pixton - Sam Christensen
