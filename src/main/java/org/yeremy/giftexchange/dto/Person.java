@@ -1,5 +1,7 @@
 package org.yeremy.giftexchange.dto;
 
+import org.springframework.core.style.ToStringCreator;
+
 public class Person
 {
     private int id;
@@ -56,6 +58,12 @@ public class Person
     public void setFamilyGroupName(String familyGroup)
     {
         this.familyGroupName = familyGroup;
+    }
+
+    @Override
+    public String toString()
+    {
+        return this.name;
     }
 
     @Override
