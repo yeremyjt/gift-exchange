@@ -1,7 +1,5 @@
 package org.yeremy.giftexchange.web;
 
-import java.io.FileNotFoundException;
-import java.io.UnsupportedEncodingException;
 import java.util.List;
 
 import javax.inject.Inject;
@@ -31,7 +29,7 @@ public class GiftExchangeController
 
     @RequestMapping(path = "/{familyGroup}", method = RequestMethod.GET, produces = "application/json")
     public List<GiftSet> getGiftExchangeList(@PathVariable("familyGroup") String familyGroup,
-            @RequestParam(value = "record") Boolean record) throws FileNotFoundException, UnsupportedEncodingException
+            @RequestParam(value = "record") Boolean record)
     {
         return giftExchangeService.getGiftExchangeList(familyGroup, record);
     }

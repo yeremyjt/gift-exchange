@@ -1,8 +1,5 @@
 package org.yeremy.giftexchange.domain;
 
-import java.io.FileNotFoundException;
-import java.io.PrintWriter;
-import java.io.UnsupportedEncodingException;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
 import java.util.ArrayList;
@@ -39,7 +36,6 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
     @Override
     @Transactional
     public List<GiftSet> getGiftExchangeList(String familyGroup, Boolean record)
-            throws FileNotFoundException, UnsupportedEncodingException
     {
         familyGroup = familyGroup.toUpperCase();
 
@@ -55,22 +51,22 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         final int currentYear = OffsetDateTime.now(ZoneId.of("UTC")).getYear();
 
         final int oneYearAgo = currentYear - 1;
-        // int twoYearsAgo = currentYear - 2;
+        final int twoYearsAgo = currentYear - 2;
 
         final List<ExchangeHistory> previousYearsExchangeHistories = new ArrayList<>();
         previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
                 oneYearAgo));
-        // previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
-        // twoYearsAgo));
+        previousYearsExchangeHistories.addAll(exchangeHistoryDao.getExchangeHistory(familyGroup,
+                twoYearsAgo));
 
         final List<GiftSet> giftSets = new ArrayList<>();
         final List<Person> persons = personDao.getPersons(familyGroup);
 
         giftSets.addAll(assignGiftSets(persons, PersonType.PARENT, previousYearsExchangeHistories, true));
-        // giftSets.addAll(assignGiftSets(persons, PersonType.CHILD, previousYearsExchangeHistories, false));
+        giftSets.addAll(assignGiftSets(persons, PersonType.CHILD, previousYearsExchangeHistories, false));
 
         check(giftSets, persons, PersonType.PARENT);
-        // check(giftSets, persons, PersonType.CHILD);
+        check(giftSets, persons, PersonType.CHILD);
 
         if (record)
         {
@@ -157,12 +153,10 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
 
     private List<GiftSet> assignGiftSets(List<Person> persons, PersonType type,
             List<ExchangeHistory> previousYearsExchangeHistories, boolean checkPriorYears)
-            throws FileNotFoundException, UnsupportedEncodingException
     {
         final List<GiftSet> giftSets = new ArrayList<>();
         final List<Person> filteredPersons = persons.stream().filter(x -> x.getType() == type)
                 .collect(Collectors.toList());
-        final List<Person> reverseOrderFilteredPersons = getListInReverseOrder(filteredPersons);
         List<Person> potentialReceivers = new ArrayList<>(filteredPersons);
 
         final int n = filteredPersons.size();
@@ -171,32 +165,24 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         final Map<Person, Person> assignmentsMap = new HashMap<>();
 
         potentialReceivers = randomizeReceivers(potentialReceivers);
+
         // Setting list of potential receivers for each giver.
         for (final Person giver : filteredPersons)
         {
             final List<Person> potentialReceiversForGiver = new ArrayList<>(potentialReceivers);
             potentialReceiversForGiver.remove(giver);
-            potentialReceiversForGiver.remove(getSpouse(giver, potentialReceivers));
-            potentialReceiversForGiver
-                    .removeAll(getPriorYearsReceiversByGiver(giver, previousYearsExchangeHistories));
+            if (type == PersonType.PARENT)
+            {
+                potentialReceiversForGiver.remove(getSpouse(giver, potentialReceivers));
+            }
+            if (checkPriorYears)
+            {
+                potentialReceiversForGiver
+                        .removeAll(getPriorYearsReceiversByGiver(giver, previousYearsExchangeHistories));
+            }
 
             possibleAssignmentsMap.put(giver, potentialReceiversForGiver);
         }
-
-        final PrintWriter writer = new PrintWriter("/home/yeremy/possible-assignments.txt", "UTF-8");
-
-        for (final Person person : filteredPersons)
-        {
-            writer.print(person.toString() + " -> ");
-
-            for (final Person p : possibleAssignmentsMap.get(person))
-            {
-                writer.print(" - ");
-                writer.print(p.toString());
-            }
-            writer.println();
-        }
-        writer.close();
 
         computeAssignments(filteredPersons, possibleAssignmentsMap, assignmentsMap);
 
@@ -209,32 +195,6 @@ public class GiftExchangeServiceImpl implements GiftExchangeService
         }
 
         return giftSets;
-    }
-
-    private boolean checkAssignmentsMap(Map<Person, Person> assignmentsMap, List<Person> filteredPersons)
-    {
-        for (final Person person : filteredPersons)
-        {
-            if (!assignmentsMap.containsKey(person) || !assignmentsMap.containsValue(person))
-            {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    private List<Person> getListInReverseOrder(List<Person> filteredPersons)
-    {
-        final List<Person> reverseOrderList = new ArrayList<>();
-        final int n = filteredPersons.size() - 1;
-
-        for (int i = n; i >= 0; i--)
-        {
-            reverseOrderList.add(filteredPersons.get(i));
-        }
-
-        return reverseOrderList;
     }
 
     private void computeAssignments(List<Person> persons, Map<Person, List<Person>> possibleAssignmentsMap,
